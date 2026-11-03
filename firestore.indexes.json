@@ -1,0 +1,27 @@
+{
+  "indexes": [],
+  "fieldOverrides": [
+    {
+      "collectionGroup": "shards",
+      "fieldPath": "d",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "shards",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "images",
+      "fieldPath": "thumb",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "images",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    }
+  ]
+}

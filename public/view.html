@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#1f6f5c">
+  <title>Zdjęcie</title>
+  <link rel="stylesheet" href="/style.css">
+  <script>
+    function showFatal(msg) {
+      var f = document.getElementById('fatal');
+      if (!f) return;
+      document.getElementById('fatal-text').textContent = String(msg && msg.message || msg);
+      f.classList.add('show');
+      var l = document.getElementById('loading'); if (l) l.hidden = true;
+    }
+    window.addEventListener('error', function (e) { showFatal(e.error || e.message); });
+    window.addEventListener('unhandledrejection', function (e) { showFatal(e.reason); });
+  </script>
+  <script type="module" src="/js/view.js"></script>
+</head>
+<body>
+<main class="viewer">
+  <header class="top">
+    <div class="brand"><span class="brand-dot"></span>Fotolink</div>
+  </header>
+
+  <section id="fatal" class="card">
+    <h2>Coś poszło nie tak</h2>
+    <p class="muted small" id="fatal-text"></p>
+  </section>
+
+  <section id="loading" class="card">
+    <p id="loading-label" class="muted">Wczytywanie…</p>
+    <div class="bar"><div id="loading-fill"></div></div>
+  </section>
+
+  <section id="error" class="card center" hidden>
+    <h1 id="error-title"></h1>
+    <p id="error-text" class="muted"></p>
+  </section>
+
+  <section id="content" class="card" hidden>
+    <img id="image" alt="">
+    <h2 id="name"></h2>
+    <div id="info" class="muted small"></div>
+    <div class="actions">
+      <a id="btn-download" class="btn block">Pobierz zdjęcie</a>
+      <button id="btn-save" class="btn ghost block" type="button" hidden>Zapisz / Udostępnij</button>
+    </div>
+  </section>
+</main>
+</body>
+</html>

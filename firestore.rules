@@ -1,0 +1,67 @@
+rules_version = '2';
+
+// Reguły bezpieczeństwa — to one naprawdę chronią Twoją bazę.
+//  • Wysyłać, listować i usuwać może tylko właściciel (Twoje konto Google).
+//  • Każdy, kto zna link, może odczytać JEDNO konkretne zdjęcie, i tylko dopóki link jest ważny.
+//  • Nikt poza Tobą nie może wylistować zdjęć, więc bez linku nie da się ich znaleźć.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // >>> WPISZ TUTAJ SWÓJ ADRES GMAIL (ten sam co w public/js/config.js) <<<
+    function isOwner() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.lower() == 'TWOJ_ADRES@gmail.com'.lower();
+    }
+
+    function notExpired() {
+      return resource.data.expireAt > request.time;
+    }
+
+    match /images/{id} {
+      allow get:    if isOwner() || (resource.data.complete == true && notExpired());
+      allow list:   if isOwner();
+      allow delete: if isOwner();
+
+      allow create: if isOwner()
+        && id.matches('^[A-Za-z0-9]{22}$')
+        && request.resource.data.keys().hasOnly(
+             ['name', 'type', 'size', 'shards', 'sha256', 'gpsRemoved', 'createdAt', 'expireAt', 'complete', 'thumb'])
+        && request.resource.data.name is string && request.resource.data.name.size() <= 200
+        && request.resource.data.type is string && request.resource.data.type.size() <= 100
+        && request.resource.data.size is int && request.resource.data.size <= 30000000
+        && request.resource.data.shards is int
+        && request.resource.data.shards >= 1 && request.resource.data.shards <= 30
+        && request.resource.data.sha256 is string && request.resource.data.sha256.size() == 64
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.expireAt is timestamp
+        && request.resource.data.expireAt > request.time
+        && request.resource.data.complete == false
+        && (!('thumb' in request.resource.data)
+            || (request.resource.data.thumb is bytes && request.resource.data.thumb.size() <= 60000));
+
+      // jedyna dozwolona zmiana: oznaczenie wysyłania jako zakończonego
+      allow update: if isOwner()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['complete'])
+        && request.resource.data.complete == true;
+
+      match /shards/{n} {
+        allow get:    if isOwner() || notExpired();
+        allow list:   if isOwner();
+        allow delete: if isOwner();
+        allow create: if isOwner()
+          && n.matches('^[0-9]{1,2}$')
+          && request.resource.data.keys().hasOnly(['d', 'expireAt'])
+          && request.resource.data.d is bytes
+          && request.resource.data.d.size() <= 1000000
+          && request.resource.data.expireAt is timestamp;
+      }
+    }
+
+    // wszystko inne — zablokowane
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
